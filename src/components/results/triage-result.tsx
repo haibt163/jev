@@ -46,8 +46,8 @@ export function TriageResult({ rows }: { rows: TriageRow[] }) {
   const flaggedCount = rows.filter((row) => row.judgment?.reviewNeeded.flagged).length;
 
   return (
-    <div className="lab-in border-t border-border">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 py-4">
+    <div className="lab-in min-w-0 border-t border-border">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 py-4">
         <p className="font-mono text-xs text-muted-foreground">
           {rows.length} items · {flaggedCount} flagged for review
         </p>
@@ -124,8 +124,8 @@ function TriageRowCard({
   const workflow = deriveTriageWorkflow(judgment);
 
   return (
-    <li className="rounded-md bg-card shadow-[0_0_0_1px_var(--color-border)]">
-      <div className="flex items-start gap-3 p-3">
+    <li className="min-w-0 overflow-hidden rounded-md bg-card shadow-[0_0_0_1px_var(--color-border)]">
+      <div className="flex min-w-0 items-start gap-3 p-3">
         <span
           className={cn(
             "mt-1 size-2 shrink-0 rounded-full",
@@ -134,7 +134,7 @@ function TriageRowCard({
           aria-hidden="true"
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm text-foreground" title={row.message}>
+          <p className="break-words text-sm text-foreground" title={row.message}>
             {row.message}
           </p>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-muted-foreground">
@@ -157,7 +157,7 @@ function TriageRowCard({
       </div>
 
       {expanded ? (
-        <div className="border-t border-border px-3 pb-3 pt-2">
+        <div className="min-w-0 overflow-hidden border-t border-border px-3 pb-3 pt-2">
           <p className="text-xs leading-relaxed text-muted-foreground">{workflow.explanation}</p>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <div>
