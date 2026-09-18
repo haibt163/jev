@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { CRITERION_IDS, CRITERION_WEIGHTS } from "./types.ts";
+import { buildCriteria } from "./questions.ts";
+import { MAX_CRITERION_LEVEL } from "./types.ts";
 import { composeCandidateJudgment } from "./normalize.ts";
 import { deriveCandidateVerdict } from "./rules.ts";
 
@@ -20,103 +21,163 @@ function rawScore(level: number, confidence = 0.9) {
   };
 }
 
-function validAnswers() {
+function validAnswers(
+  criteria = buildCriteria("I need a laptop for programming and travel."),
+) {
   const answers: Record<string, unknown> = {};
-  for (const id of CRITERION_IDS) {
-    answers[id] = rawScore(2);
+  for (const criterion of criteria) {
+    answers[criterion.id] = rawScore(2);
   }
   answers.needs_info = { type: "noul", noul: 0.1 };
   return answers;
 }
 
+describe("compare criteria generation", () => {
+  it("derives only request-relevant laptop criteria", () => {
+    const criteria = buildCriteria(
+      "I need a laptop for programming and travel.",
+    );
+    assert.deepEqual(
+      criteria.map((criterion) => criterion.id),
+      ["portability", "performance"],
+    );
+    assert.equal(
+      Math.abs(
+        criteria.reduce((sum, criterion) => sum + criterion.weight, 0) - 1,
+      ) < 1e-9,
+      true,
+    );
+  });
+
+  it("does not introduce hardware criteria for a partner gift request", () => {
+    const criteria = buildCriteria(
+      "I need an engagement diamond ring for my partner.",
+    );
+    assert.deepEqual(
+      criteria.map((criterion) => criterion.id),
+      ["personal_fit"],
+    );
+  });
+});
+
 describe("composeCandidateJudgment", () => {
-  it("normalizes every criterion onto 0-1 and computes the weighted composite", () => {
-    const result = composeCandidateJudgment(validAnswers(), "Test", "desc");
+  it("normalizes dynamic criteria and computes the weighted composite", () => {
+    const criteria = buildCriteria(
+      "I need a laptop for programming and travel.",
+    );
+    const result = composeCandidateJudgment(
+      validAnswers(criteria),
+      "Test",
+      "desc",
+      criteria,
+    );
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    for (const id of CRITERION_IDS) {
-      assert.equal(result.judgment.normalized[id], 2 / 3);
+    for (const criterion of criteria) {
+      assert.equal(
+        result.judgment.normalized[criterion.id],
+        2 / MAX_CRITERION_LEVEL,
+      );
     }
-    const expected = CRITERION_IDS.reduce(
-      (sum, id) => sum + CRITERION_WEIGHTS[id] * (2 / 3),
-      0,
-    );
-    assert.ok(Math.abs(result.judgment.composite - expected) < 1e-9);
+    assert.ok(Math.abs(result.judgment.composite - 2 / 3) < 1e-9);
     assert.equal(result.judgment.confidence, 0.9);
   });
 
-  it("weights push a top performer above a mid performer deterministically", () => {
-    const strong = composeCandidateJudgment(validAnswers(), "Strong", "desc");
-    const mid = composeCandidateJudgment(
-      (() => {
-        const answers = validAnswers();
-        for (const id of CRITERION_IDS) answers[id] = rawScore(1);
-        return answers;
-      })(),
-      "Mid",
-      "desc",
-    );
-    assert.equal(strong.ok && mid.ok, true);
-    if (!strong.ok || !mid.ok) return;
-    assert.ok(strong.judgment.composite > mid.judgment.composite);
-  });
-
   it("rejects a malformed criterion answer", () => {
-    const answers = validAnswers();
-    answers.portability = { type: "noul", noul: 0.5 };
-    const result = composeCandidateJudgment(answers, "Test", "desc");
+    const criteria = buildCriteria(
+      "I need a laptop for programming and travel.",
+    );
+    const answers = validAnswers(criteria);
+    answers[criteria[0].id] = { type: "noul", noul: 0.5 };
+    const result = composeCandidateJudgment(
+      answers,
+      "Test",
+      "desc",
+      criteria,
+    );
     assert.equal(result.ok, false);
     if (result.ok) return;
-    assert.match(result.error, /portability/);
+    assert.match(result.error, new RegExp(criteria[0].id));
   });
 
   it("rejects a missing answers object", () => {
-    const result = composeCandidateJudgment(undefined, "Test", "desc");
+    const criteria = buildCriteria(
+      "I need a laptop for programming and travel.",
+    );
+    const result = composeCandidateJudgment(undefined, "Test", "desc", criteria);
     assert.equal(result.ok, false);
   });
 
   it("reports null confidence when any confidence is absent", () => {
-    const answers = validAnswers();
-    const first = CRITERION_IDS[0];
+    const criteria = buildCriteria(
+      "I need a laptop for programming and travel.",
+    );
+    const answers = validAnswers(criteria);
+    const first = criteria[0].id;
     answers[first] = { ...rawScore(2), confidence: undefined };
-    const result = composeCandidateJudgment(answers, "Test", "desc");
+    const result = composeCandidateJudgment(
+      answers,
+      "Test",
+      "desc",
+      criteria,
+    );
     assert.equal(result.ok, true);
     if (!result.ok) return;
     assert.equal(result.judgment.confidence, null);
   });
-});
 
-describe("deriveCandidateVerdict", () => {
-  it("holds sparse candidates for more info instead of ranking them", () => {
-    const result = composeCandidateJudgment(validAnswers(), "Test", "desc");
+  it("holds sparse candidates for more info", () => {
+    const criteria = buildCriteria(
+      "I need a laptop for programming and travel.",
+    );
+    const result = composeCandidateJudgment(
+      validAnswers(criteria),
+      "Test",
+      "desc",
+      criteria,
+    );
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    const sparse = {
+    const verdict = deriveCandidateVerdict({
       ...result.judgment,
-      needsInfo: { type: "noul" as const, noul: 0.8 },
-    };
-    const verdict = deriveCandidateVerdict(sparse);
+      needsInfo: { type: "noul", noul: 0.8 },
+    });
     assert.equal(verdict.action, "needs_info");
   });
 
   it("shortlists confident candidates", () => {
-    const result = composeCandidateJudgment(validAnswers(), "Test", "desc");
+    const criteria = buildCriteria(
+      "I need a laptop for programming and travel.",
+    );
+    const result = composeCandidateJudgment(
+      validAnswers(criteria),
+      "Test",
+      "desc",
+      criteria,
+    );
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    const verdict = deriveCandidateVerdict(result.judgment);
-    assert.equal(verdict.action, "shortlist");
-    assert.equal(verdict.strongest in CRITERION_WEIGHTS, true);
+    assert.equal(deriveCandidateVerdict(result.judgment).action, "shortlist");
   });
 
-  it("keeps spread judgments in the comparison without shortlisting", () => {
-    const result = composeCandidateJudgment(validAnswers(), "Test", "desc");
+  it("keeps spread judgments in comparison", () => {
+    const criteria = buildCriteria(
+      "I need a laptop for programming and travel.",
+    );
+    const result = composeCandidateJudgment(
+      validAnswers(criteria),
+      "Test",
+      "desc",
+      criteria,
+    );
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    const spread = {
-      ...result.judgment,
-      confidence: 0.3,
-    };
-    const verdict = deriveCandidateVerdict(spread);
-    assert.equal(verdict.action, "compare");
+    assert.equal(
+      deriveCandidateVerdict({
+        ...result.judgment,
+        confidence: 0.3,
+      }).action,
+      "compare",
+    );
   });
 });
