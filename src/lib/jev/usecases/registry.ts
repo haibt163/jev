@@ -66,7 +66,11 @@ export async function runUseCase(
   }
 
   const state = useCase.buildState(input);
-  const raw = await evaluate(state, useCase.questions, useCase.model);
+  const questions =
+    typeof useCase.questions === "function"
+      ? useCase.questions(state)
+      : useCase.questions;
+  const raw = await evaluate(state, questions, useCase.model);
   if (!raw.ok) return raw;
 
   const judgment = useCase.normalize(raw.rawAnswers, input);
