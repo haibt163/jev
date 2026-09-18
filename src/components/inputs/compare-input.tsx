@@ -29,6 +29,9 @@ export function CompareInput({
   const ready =
     request.trim().length > 0 &&
     candidates.some((c) => c.name.trim() && c.description.trim());
+  const validCount = candidates.filter(
+    (c) => c.name.trim() && c.description.trim(),
+  ).length;
 
   return (
     <form
@@ -113,7 +116,9 @@ export function CompareInput({
         <Button type="submit" size="lg" disabled={analyzing || !ready}>
           {analyzing
             ? "Scoring candidates…"
-            : `Compare ${candidates.filter((c) => c.name.trim() && c.description.trim()).length} candidates`}
+            : ready
+              ? `Compare ${validCount} candidate${validCount === 1 ? "" : "s"}`
+              : "Add a candidate to compare"}
         </Button>
         <p className="mt-2 text-xs text-muted-foreground">
           Each candidate is judged independently against your stated needs; the
