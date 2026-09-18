@@ -1,5 +1,5 @@
 {
-  "name": "jev-live-router",
+  "name": "jev-playground",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "node --experimental-strip-types --test src/lib/jev/routing.test.ts"
+    "test": "node --experimental-strip-types --test src/lib/jev/core/parse.test.ts src/lib/jev/usecases/support-router/normalize.test.ts src/lib/jev/usecases/compare-choose/normalize.test.ts src/lib/jev/usecases/content-triage/normalize.test.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",

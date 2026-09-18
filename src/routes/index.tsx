@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LiveRouter } from "@/components/live-router";
+import { Playground } from "@/components/playground";
 import { getTypesafeConfig } from "@/lib/jev/config";
 
 export const Route = createFileRoute("/")({
@@ -9,7 +9,5 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const config = Route.useLoaderData();
-  return (
-    <LiveRouter configured={config.configured} status={config.status} />
-  );
+  return <Playground config={config} />;
 }
