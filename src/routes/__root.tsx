@@ -10,7 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Jev Live Router";
+const APP_NAME = "Jev Playground";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -20,7 +20,8 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       {
         name: "description",
-        content: "Turn natural-language requests into structured decisions.",
+        content:
+          "Give Jev a messy real-world input. It turns it into fast, typed judgments that application code can use.",
       },
       { name: "theme-color", content: THEME_LIGHT },
     ],
