@@ -1,22 +1,8 @@
 import type { ComparisonJudgment } from "@/lib/jev/usecases/compare-choose/types";
 import { deriveCandidateVerdict } from "@/lib/jev/usecases/compare-choose/rules";
-import { CRITERION_IDS, CRITERION_WEIGHTS } from "@/lib/jev/usecases/compare-choose/types";
 import { formatPct } from "@/lib/jev/core/format";
 import { cn } from "@/lib/utils";
 
-const CRITERION_LABELS: Record<string, string> = {
-  portability: "Portability",
-  performance: "Performance",
-  battery: "Battery",
-  value: "Value",
-  fit: "Fit",
-};
-
-/**
- * Deterministic comparison computed in application code from typed
- * judgments. The composite is a weighted sum of normalized Score
- * positions — an application metric, never a Jev output.
- */
 export function CompareResult({
   candidates,
 }: {
@@ -28,11 +14,24 @@ export function CompareResult({
     return bv - av;
   });
 
+  const criteria =
+    candidates.find((candidate) => candidate.judgment)?.judgment?.criteria ?? [];
+
   return (
     <div className="lab-in min-w-0 border-t border-border">
       <p className="py-4 text-xs leading-relaxed text-muted-foreground">
-        Weights (set in application code):{" "}
-        {CRITERION_IDS.map((id) => `${CRITERION_LABELS[id]} ${Math.round(CRITERION_WEIGHTS[id] * 100)}%`).join(" · ")}
+        Criteria generated from your stated need:{" "}
+        {criteria.length
+          ? criteria
+              .map(
+                (criterion) =>
+                  criterion.label +
+                  " " +
+                  Math.round(criterion.weight * 100) +
+                  "%",
+              )
+              .join(" · ")
+          : "Overall fit"}
       </p>
       <ol className="space-y-3">
         {ranked.map((candidate, index) => (
@@ -55,7 +54,9 @@ function CandidateCard({
   if (!candidate.judgment) {
     return (
       <div className="rounded-md bg-card p-4 shadow-[0_0_0_1px_var(--color-border)]">
-        <p className="text-sm text-destructive">{candidate.error ?? "Evaluation failed."}</p>
+        <p className="text-sm text-destructive">
+          {candidate.error ?? "Evaluation failed."}
+        </p>
       </div>
     );
   }
@@ -83,33 +84,39 @@ function CandidateCard({
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
         <div
           className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
-          style={{ width: `${Math.round(judgment.composite * 100)}%` }}
+          style={{ width: Math.round(judgment.composite * 100) + "%" }}
         />
       </div>
 
-      <dl className="mt-4 grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-5 sm:gap-2">
-        {CRITERION_IDS.map((id) => (
-          <div key={id} className="min-w-0">
+      <dl className="mt-4 grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3 md:grid-cols-5 sm:gap-2">
+        {judgment.criteria.map((criterion) => (
+          <div key={criterion.id} className="min-w-0">
             <dt className="truncate text-kicker uppercase text-muted-foreground">
-              {CRITERION_LABELS[id]}
+              {criterion.label}
             </dt>
             <dd className="mt-1 font-mono text-sm tabular-nums text-foreground">
-              {Math.round(judgment.normalized[id] * 100)}
+              {Math.round(judgment.normalized[criterion.id] * 100)}
             </dd>
             <div className="mt-1 h-0.5 rounded-full bg-border" aria-hidden="true">
               <div
                 className={cn(
                   "h-full rounded-full",
-                  id === verdict.strongest ? "bg-accent" : "bg-muted-foreground/60",
+                  criterion.id === verdict.strongest
+                    ? "bg-accent"
+                    : "bg-muted-foreground/60",
                 )}
-                style={{ width: `${Math.round(judgment.normalized[id] * 100)}%` }}
+                style={{
+                  width: Math.round(judgment.normalized[criterion.id] * 100) + "%",
+                }}
               />
             </div>
           </div>
         ))}
       </dl>
 
-      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{verdict.explanation}</p>
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        {verdict.explanation}
+      </p>
 
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground">
         {verdict.action === "needs_info" ? (
@@ -123,7 +130,12 @@ function CandidateCard({
           <span>confidence n/a</span>
         )}
         <span>
-          strongest {CRITERION_LABELS[verdict.strongest]} · weakest {CRITERION_LABELS[verdict.weakest]}
+          strongest{" "}
+          {judgment.criteria.find((c) => c.id === verdict.strongest)?.label ??
+            verdict.strongest}{" "}
+          · weakest{" "}
+          {judgment.criteria.find((c) => c.id === verdict.weakest)?.label ??
+            verdict.weakest}
         </span>
       </div>
     </div>
