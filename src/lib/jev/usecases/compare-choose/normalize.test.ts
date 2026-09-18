@@ -55,7 +55,11 @@ describe("compare criteria generation", () => {
     );
     assert.deepEqual(
       criteria.map((criterion) => criterion.id),
-      ["personal_fit"],
+      ["personal_fit", "quality"],
+    );
+    assert.equal(
+      Math.abs(criteria.reduce((sum, criterion) => sum + criterion.weight, 0) - 1) < 1e-9,
+      true,
     );
   });
 });
