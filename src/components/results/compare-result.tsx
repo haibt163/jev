@@ -29,7 +29,7 @@ export function CompareResult({
   });
 
   return (
-    <div className="lab-in border-t border-border">
+    <div className="lab-in min-w-0 border-t border-border">
       <p className="py-4 text-xs leading-relaxed text-muted-foreground">
         Weights (set in application code):{" "}
         {CRITERION_IDS.map((id) => `${CRITERION_LABELS[id]} ${Math.round(CRITERION_WEIGHTS[id] * 100)}%`).join(" · ")}
@@ -65,14 +65,14 @@ function CandidateCard({
 
   return (
     <div className="rounded-md bg-card p-4 shadow-[0_0_0_1px_var(--color-border)]">
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-2.5 sm:items-baseline sm:gap-3">
         <div className="min-w-0">
           <p className="font-mono text-xs text-muted-foreground">#{rank}</p>
           <p className="truncate text-lg font-medium tracking-tight text-foreground">
             {judgment.name}
           </p>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-left sm:text-right">
           <p className="font-mono text-xl tabular-nums text-foreground">
             {Math.round(judgment.composite * 100)}
           </p>
@@ -87,7 +87,7 @@ function CandidateCard({
         />
       </div>
 
-      <dl className="mt-4 grid grid-cols-5 gap-2">
+      <dl className="mt-4 grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-5 sm:gap-2">
         {CRITERION_IDS.map((id) => (
           <div key={id} className="min-w-0">
             <dt className="truncate text-kicker uppercase text-muted-foreground">
