@@ -97,7 +97,7 @@ export function buildCriteria(request: string): CriterionDefinition[] {
   if (/budget|price|afford|cost|cheap|value|spend/.test(text)) {
     push("budget_fit", "Budget fit", 0.25);
   }
-  if (/gift|partner|relationship|personal|symbol|sentimental|meaning/.test(text)) {
+  if (/gift|engagement|ring|partner|relationship|personal|symbol|sentimental|meaning/.test(text)) {
     push("personal_fit", "Personal fit", 0.25);
   }
   if (/travel|portable|carry|light|compact/.test(text)) {
@@ -118,7 +118,7 @@ export function buildCriteria(request: string): CriterionDefinition[] {
   if (/appearance|look|style|design|aesthetic|beautiful/.test(text)) {
     push("aesthetics", "Aesthetic fit", 0.2);
   }
-  if (/quality|spec|feature|capability/.test(text)) {
+  if (/quality|spec|feature|capability|carat|diamond|gemstone|jewell?ry|ring/.test(text)) {
     push("quality", "Relevant quality", 0.2);
   }
 
