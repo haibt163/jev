@@ -14,7 +14,7 @@ labor: **Jev judges; this application decides.**
 | Use case | What Jev judges | What the application decides |
 | --- | --- | --- |
 | **Support Router** | Intent category, recommended handler (Choice), urgency (Score), human-escalation and ambiguity (Noul) | Which queue receives the request, when to flag review, when to ask for clarification |
-| **Compare & Choose** | One candidate per call: portability, performance, battery, value, fit (Scores) plus a "description too sparse" Noul | The weighted composite, ranking order, shortlist vs. needs-info verdicts |
+| **Compare & Choose** | One candidate per call: request-derived Score criteria plus a "description too sparse" Noul | The generated weighted composite, ranking order, shortlist vs. needs-info verdicts |
 | **Content Triage** | Category (Choice), priority (Score), review-needed (Noul) | Reply / forward-to-support / archive / flag-for-review routing, batch sort and filters |
 
 Each use case is a self-contained module in `src/lib/jev/usecases/` that
@@ -34,7 +34,8 @@ input → buildState → TypeSafe evaluate (core) → normalize → application 
   (`runUseCase`, `runUseCaseBatch`) and use-case lookup.
 - `src/lib/jev/usecases/<name>/` — per use case: `catalog.ts` (data),
   `questions.ts` (state + Jev questions), `normalize.ts` (typed judgments),
-  `rules.ts` (deterministic workflow), `index.ts` (UseCaseDef).
+  `rules.ts` (deterministic workflow), `index.ts` (UseCaseDef). Compare & Choose
+  derives its Score question schema from the user's request before evaluation.
 - `src/routes/api/analyze.ts` — one endpoint: `GET` returns connection status
   and the registry summary; `POST` evaluates `{ useCaseId, input }` or a
   batch `{ useCaseId, batch: [...] }`.
