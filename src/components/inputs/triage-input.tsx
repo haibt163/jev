@@ -60,7 +60,7 @@ export function TriageInput({
       </div>
 
       {batchMode ? (
-        <div className="mt-2 min-h-44 flex-1">
+        <div className="relative mt-2 min-h-44 flex-1">
           <Textarea
             id={batchId}
             value={batchText}
@@ -71,7 +71,7 @@ export function TriageInput({
           />
         </div>
       ) : (
-        <div className="mt-2 min-h-44 flex-1">
+        <div className="relative mt-2 min-h-44 flex-1">
           <Textarea
             id={inputId}
             value={message}
