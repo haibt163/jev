@@ -1,0 +1,81 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output / caches
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+.cache/
+.parcel-cache/
+.vite/
+.output/
+.vercel/
+
+# Environment files / secrets
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.local.example
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+secrets/
+credentials/
+**/secrets/
+**/credentials/
+
+# Logs / temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Test / tooling output
+playwright-report/
+test-results/
+.nyc_output/
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# TypeScript / tooling caches
+*.tsbuildinfo
+.eslintcache
+
+# Grok / generated workspace artifacts
+.grok/
+.grok-*/
+grok-workspace/
+sandbox/
+sandboxes/
+artifacts/
+workspace-artifacts/
+attachments/
+
+# Local database / runtime state
+*.sqlite
+*.sqlite3
+*.db
+.pglite/
+
+# Misc generated files
+*.orig
+*.rej

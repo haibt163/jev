@@ -1,0 +1,147 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap");
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --ts-bg: #f4f3ef;
+  --ts-fg: #1b1b19;
+  --ts-muted: #ecebe6;
+  --ts-muted-fg: #6d6d67;
+  --ts-border: #e2e0d8;
+  --ts-card: #fcfbf8;
+  --ts-input: #fcfbf8;
+  --ts-accent: #2f6fed;
+  --ts-accent-fg: #f7f9ff;
+  --ts-success: #3f7a52;
+  --ts-warning: #9a7040;
+  --ts-destructive: #b4564e;
+  --ts-code: #f0efe9;
+}
+
+.dark {
+  --ts-bg: #141414;
+  --ts-fg: #f2f1ec;
+  --ts-muted: #1c1c1c;
+  --ts-muted-fg: #8e8e88;
+  --ts-border: #2c2c2c;
+  --ts-card: #1a1a1a;
+  --ts-input: #1a1a1a;
+  --ts-accent: #5b8af5;
+  --ts-accent-fg: #0c1220;
+  --ts-success: #7f9a80;
+  --ts-warning: #c4a56a;
+  --ts-destructive: #d37a72;
+  --ts-code: #111111;
+}
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-background: var(--ts-bg);
+  --color-foreground: var(--ts-fg);
+  --color-card: var(--ts-card);
+  --color-card-foreground: var(--ts-fg);
+  --color-muted: var(--ts-muted);
+  --color-muted-foreground: var(--ts-muted-fg);
+  --color-border: var(--ts-border);
+  --color-primary: var(--ts-accent);
+  --color-primary-foreground: var(--ts-accent-fg);
+  --color-accent: var(--ts-accent);
+  --color-accent-foreground: var(--ts-accent-fg);
+  --color-destructive: var(--ts-destructive);
+  --color-warning: var(--ts-warning);
+  --color-success: var(--ts-success);
+  --color-ring: var(--ts-accent);
+  --color-input: var(--ts-input);
+  --color-code: var(--ts-code);
+
+  --text-kicker: 0.6875rem;
+  --text-kicker--line-height: 1rem;
+  --text-kicker--letter-spacing: 0.14em;
+  --text-kicker--font-weight: 500;
+
+  --text-composer: 0.9375rem;
+  --text-composer--line-height: 1.55;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --duration-quick: 150ms;
+  --duration-fast: 250ms;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--ts-bg);
+    color: var(--ts-fg);
+  }
+
+  html.theme-ready,
+  html.theme-ready body {
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer utilities {
+  .lab-in {
+    animation: lab-in var(--duration-fast) var(--ease-out);
+  }
+}
+
+@keyframes lab-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-ready,
+  html.theme-ready body {
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
