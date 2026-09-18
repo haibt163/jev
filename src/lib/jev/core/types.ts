@@ -135,7 +135,7 @@ export type UseCaseDef<TState = unknown, TInput = unknown, TJudgment = unknown> 
   /** Builds the TypeSafe state object from validated input. */
   buildState: (input: TInput) => TState;
   /** The TypeSafe questions object sent with every request for this use case. */
-  questions: Record<string, unknown>;
+  questions: Record<string, unknown> | ((state: TState) => Record<string, unknown>);
   /** Normalizes raw Jev answers into a typed judgment, or a parse error string. */
   normalize: (rawAnswers: unknown, input: TInput) => TJudgment | string;
   /** Application-level thresholds; the values live here, not in Jev. */

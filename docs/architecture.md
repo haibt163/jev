@@ -5,68 +5,49 @@
 Every evaluation follows the same contract:
 
 ```
-Use Case → State Builder → Question Set → TypeSafe/Jev Evaluation
-        → Normalized Typed Judgments → Application Rules → Presentation
+input → derive criteria from need → buildState → TypeSafe evaluate (core)
+      → normalize → application rules → presentation
 ```
 
-- **State builder** (`questions.ts::buildState`): turns validated user
-  input into the JSON state Jev evaluates. State carries the content plus
-  any known-set context (e.g. `available_categories`).
-- **Question set** (`questions.ts::JEV_QUESTIONS`): narrow, typed
-  questions. Choice for closed sets, Score for ordered rubrics, Noul for
-  yes/no probabilities. Question IDs are for application code only; the
-  model never sees them (per TypeSafe docs).
-- **Evaluation** (`core/typesafe.server.ts::evaluate`): the single SDK
-  boundary. One `systemOne` call per state; timeout, retries, error
-  mapping (`APITimeoutError` → `timeout`, etc.), usage capture. The
-  `TYPESAFE_API_KEY` is read at call time from the server environment and
-  redacted from any error text.
-- **Normalization** (`normalize.ts`): parses raw answers into typed
-  judgments (`core/parse.ts`), tolerating structured criteria, clamping
-  float overshoot, rejecting malformed shapes with per-field error
-  messages. Unknown enum values warn instead of failing.
-- **Application rules** (`rules.ts`): deterministic workflow. Thresholds
-  live here (e.g. `noulTrueThreshold: 0.5`), producing actions
-  (`route`, `route_and_flag`, `clarify`, `flag_review`, `archive`, …) and
-  the user-facing explanation. Jev output is never re-written as prose by
-  the model; explanations are string templates over judgment fields.
-- **Presentation**: React components render primitive-aware visualizations
-  (distribution bars for Choice/Score, threshold-marked tracks for Noul).
+- **Criteria generation**: `compare-choose/questions.ts::buildCriteria` derives
+  request-specific dimensions and weights from the user's stated need. The
+  generator is deterministic application code; the generated criteria are
+  shared across all candidates in the comparison.
+- **State builder** includes the user's request, candidate details, and generated
+  criteria.
+- **Question builder** creates narrow Score questions for each generated
+  criterion plus a Noul for sparse candidate descriptions.
+- **Core evaluation** remains behind the single SDK boundary in
+  `core/typesafe.server.ts`.
+- **Normalization** parses typed answers and computes the weighted composite from
+  the generated criteria. The composite remains an application metric, not a
+  Jev output.
+- **Rules** remain deterministic and operate over normalized typed judgments.
+- **Presentation** renders the generated criterion labels and weights.
 
-## Registry
+## Design invariant
 
-`usecases/registry.ts` maps use-case IDs to their `UseCaseDef` and exposes
-`runUseCase` / `runUseCaseBatch`. The server route (`/api/analyze`)
-dispatches on `useCaseId`; `GET` serves the registry summary so the client
-renders selectors and examples without importing server modules.
+**Never score a candidate on an irrelevant hardcoded criterion.**
 
-Batch: `runUseCaseBatch` runs the identical pipeline per item in parallel
-with per-item success/failure (`MAX_BATCH_SIZE = 20`). Compare & Choose
-fans one request per candidate from the client instead, because each
-candidate is an independent state.
+The generator currently recognizes explicit signals for budget, gift/partner
+context, portability, performance, battery, durability, ethics, aesthetics,
+and product quality. Unknown requests fall back to one neutral overall-fit
+criterion. Matching criteria are normalized to sum to 100%.
 
-## Server/client split
+For example, an engagement-diamond request can yield personal-fit and budget-fit
+criteria when those needs are actually stated, while a laptop request with
+programming and travel yields portability and performance.
 
-- Server-only: `core/typesafe.server.ts`, `usecases/registry.ts`
-  (imports the SDK boundary; throws if bundled client-side).
-- Shared/pure: judgment types, `core/parse.ts`, per-use-case
-  `questions.ts`/`rules.ts` (client renders questions and derives
-  workflow chips from the same code the server used).
-- Client: `lib/client/api.ts` (typed fetch wrapper — the single wire/typed
-  judgment boundary), `components/*`.
+## Dynamic question contract
 
-## Error handling
+The core use-case contract allows `questions` to be either a static question
+object or a function of the generated state. Compare & Choose uses the latter:
+the state carries the generated criteria, and the registry builds the matching
+Score question set immediately before the TypeSafe call. This keeps the
+criteria/schema aligned with the request that is actually being evaluated.
 
-Classified failures (`missing_api_key`, `invalid_input`, `timeout`,
-`network`, `typesafe_error`, `invalid_response`,
-`batch_size_exceeded`) map to distinct HTTP statuses (400/502/503/504) and
-to user-readable copy. The developer view exposes `code` + `detail`
-without credentials.
+## Testing
 
-## Testing strategy
-
-Deterministic only: `core/parse.test.ts` covers the three primitives
-(valid/malformed/boundary), each use case's `normalize.test.ts` covers
-normalization plus rule behavior (workflow branches, weighted composite
-math, threshold crossings) against fixed answer fixtures. No network, no
-credentials. The live SDK path is exercised only by real usage.
+The compare-choose suite covers request-specific criteria generation,
+normalization, weighted composite math, malformed answers, confidence handling,
+and workflow thresholds.

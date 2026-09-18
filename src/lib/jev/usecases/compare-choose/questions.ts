@@ -1,4 +1,4 @@
-import { MAX_CRITERION_LEVEL } from "./types.ts";
+import { MAX_CRITERION_LEVEL, type CriterionDefinition } from "./types.ts";
 
 export type CandidateInput = {
   request: string;
@@ -10,87 +10,127 @@ export type CandidateState = {
   user_request: string;
   candidate_name: string;
   candidate_description: string;
+  comparison_criteria: CriterionDefinition[];
 };
 
-/**
- * One candidate per TypeSafe call: the state carries the user's request and
- * a single candidate. Five Score questions place the candidate on explicit
- * dimensions; a Noul catches insufficient descriptions. No global "best"
- * score is asked of Jev \u2014 the composite is computed in application code.
- */
-export const JEV_QUESTIONS = {
-  portability: {
-    type: "score" as const,
-    instructions:
-      "How well does `candidate_description` satisfy portability for the needs stated in `user_request`? Judge the described product only.",
-    criteria: [
-      "Not portable at all; the description indicates a stationary or bulky product",
-      "Portable with effort; heavy or awkward for regular carrying",
-      "Comfortably portable for everyday carry",
-      "Exceptionally portable; light and compact with no tradeoffs stated",
-    ],
-  },
-  performance: {
-    type: "score" as const,
-    instructions:
-      "How well does `candidate_description` satisfy the performance needs stated in `user_request`? Judge only what the description supports.",
-    criteria: [
-      "Clearly insufficient for the stated performance needs",
-      "Marginal; basic needs are met but demanding use would struggle",
-      "Solid; covers the stated needs with some headroom",
-      "Strong; exceeds the stated performance needs",
-    ],
-  },
-  battery: {
-    type: "score" as const,
-    instructions:
-      "How well does `candidate_description` satisfy battery or power needs implied by `user_request`? If the description says nothing about battery, judge conservatively from the product type.",
-    criteria: [
-      "Inadequate for the usage pattern implied by the request",
-      "Usable but charging will interrupt the stated usage",
-      "Comfortable for the stated usage pattern",
-      "Exceptional battery suitability for the stated usage",
-    ],
-  },
-  value: {
-    type: "score" as const,
-    instructions:
-      "How well does the price in `candidate_description` match the value delivered for the needs in `user_request`? Judge value for money, not absolute cost.",
-    criteria: [
-      "Poor value; clearly overpriced for what it delivers",
-      "Fair value; price roughly matches what is delivered",
-      "Good value; more is delivered than the price suggests",
-      "Excellent value; standout price-to-value for the stated needs",
-    ],
-  },
-  fit: {
-    type: "score" as const,
-    instructions:
-      "Overall, how well does `candidate_description` fit the priorities explicitly stated in `user_request`? Weight the user's own words heavily.",
-    criteria: [
-      "Poor fit; misses most of the stated priorities",
-      "Partial fit; covers some stated priorities",
-      "Good fit; covers most stated priorities",
-      "Excellent fit; directly serves every stated priority",
-    ],
-  },
-  needs_info: {
+function buildCriteriaPrompt(criteria: CriterionDefinition[]) {
+  return criteria
+    .map(
+      (criterion) =>
+        "- " +
+        criterion.label +
+        " (weight " +
+        Math.round(criterion.weight * 100) +
+        "%): judge only how well the candidate satisfies this criterion for the stated need.",
+    )
+    .join("\n");
+}
+
+export function buildQuestions(criteria: CriterionDefinition[]) {
+  const questions: Record<string, unknown> = {};
+
+  for (const criterion of criteria) {
+    questions[criterion.id] = {
+      type: "score" as const,
+      instructions:
+        'How well does candidate_description satisfy the "' +
+        criterion.label +
+        '" criterion for user_request? Use only the stated need and candidate description. Do not invent missing facts. Generated criteria:\n' +
+        buildCriteriaPrompt(criteria),
+      criteria: [
+        "Clearly poor against " +
+          criterion.label +
+          "; the candidate misses this need.",
+        "Limited against " +
+          criterion.label +
+          "; the candidate only partly satisfies this need.",
+        "Good against " +
+          criterion.label +
+          "; the candidate substantially satisfies this need.",
+        "Excellent against " +
+          criterion.label +
+          "; the candidate strongly satisfies this need.",
+      ],
+    };
+  }
+
+  questions.needs_info = {
     type: "noul" as const,
     instructions:
-      "Is `candidate_description` too sparse to judge fit for `user_request` reliably?",
+      "Is candidate_description too sparse to judge the candidate reliably against the generated comparison criteria?",
     criteria: {
-      true: "The description lacks the facts a judgment would need.",
-      false: "The description contains enough to judge.",
+      true: "The description lacks facts needed for a reliable judgment.",
+      false: "The description contains enough information for a usable judgment.",
     },
-  },
-};
+  };
 
-export { MAX_CRITERION_LEVEL };
+  return questions;
+}
 
-export function buildState(input: CandidateInput): CandidateState {
+export function buildState(
+  input: CandidateInput,
+  criteria: CriterionDefinition[],
+): CandidateState {
   return {
     user_request: input.request,
     candidate_name: input.name,
     candidate_description: input.description,
+    comparison_criteria: criteria,
   };
 }
+
+/**
+ * Deterministically derives a small set of request-specific criteria.
+ * Criteria are application-owned so the final schema and weighting remain
+ * explicit and testable rather than being hardcoded to one product domain.
+ */
+export function buildCriteria(request: string): CriterionDefinition[] {
+  const text = request.trim().toLowerCase();
+  const criteria: CriterionDefinition[] = [];
+
+  const push = (id: string, label: string, weight: number) => {
+    if (!criteria.some((criterion) => criterion.id === id)) {
+      criteria.push({ id, label, weight });
+    }
+  };
+
+  if (/budget|price|afford|cost|cheap|value|spend/.test(text)) {
+    push("budget_fit", "Budget fit", 0.25);
+  }
+  if (/gift|engagement|ring|partner|relationship|personal|symbol|sentimental|meaning/.test(text)) {
+    push("personal_fit", "Personal fit", 0.25);
+  }
+  if (/travel|portable|carry|light|compact/.test(text)) {
+    push("portability", "Portability", 0.2);
+  }
+  if (/performance|programming|gaming|workload|power/.test(text)) {
+    push("performance", "Performance", 0.2);
+  }
+  if (/battery|charging/.test(text)) {
+    push("battery", "Battery life", 0.2);
+  }
+  if (/durab|reliab|hardness|wear|long[- ]term/.test(text)) {
+    push("durability", "Durability", 0.2);
+  }
+  if (/ethical|sustainab|environment|origin|social/.test(text)) {
+    push("ethics", "Ethical considerations", 0.2);
+  }
+  if (/appearance|look|style|design|aesthetic|beautiful/.test(text)) {
+    push("aesthetics", "Aesthetic fit", 0.2);
+  }
+  if (/quality|spec|feature|capability|carat|diamond|gemstone|jewell?ry|ring/.test(text)) {
+    push("quality", "Relevant quality", 0.2);
+  }
+
+  if (criteria.length === 0) {
+    push("overall_fit", "Overall fit to the stated need", 1);
+  }
+
+  const total = criteria.reduce((sum, criterion) => sum + criterion.weight, 0);
+  return criteria.map((criterion) => ({
+    ...criterion,
+    weight: criterion.weight / total,
+  }));
+}
+
+export { MAX_CRITERION_LEVEL };
