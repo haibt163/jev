@@ -244,15 +244,15 @@ export function Playground({ config }: { config: PlaygroundConfig }) {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       <header className="shrink-0 border-b border-border">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-5 py-3 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-col gap-3 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="min-w-0">
-            <p className="text-kicker uppercase text-muted-foreground">TypeSafe · System One</p>
-            <h1 className="mt-1 text-lg font-medium tracking-tight">JEV PLAYGROUND</h1>
+            <p className="text-[0.65rem] uppercase tracking-[0.12em] text-muted-foreground sm:text-kicker">TypeSafe · System One</p>
+            <h1 className="mt-1 text-base font-medium tracking-tight sm:text-lg">JEV PLAYGROUND</h1>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
             <StatusIndicator connected={connected} />
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Developer view</span>
+              <span className="text-[0.6875rem] text-muted-foreground sm:text-xs">Developer view</span>
               <Switch
                 checked={developerView}
                 onCheckedChange={setDeveloperView}
@@ -264,12 +264,12 @@ export function Playground({ config }: { config: PlaygroundConfig }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-5 pb-12 lg:px-8">
-        <section className="pt-8">
-          <h2 className="max-w-2xl text-2xl font-medium leading-tight tracking-tight text-foreground">
+      <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 px-4 pb-10 sm:px-5 sm:pb-12 lg:px-8">
+        <section className="pt-6 sm:pt-8">
+          <h2 className="max-w-2xl text-xl font-medium leading-tight tracking-tight text-foreground sm:text-2xl">
             Messy real-world input in. Fast, typed judgments out — that application code can act on.
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-[0.8125rem] leading-relaxed text-muted-foreground sm:text-sm">
             Jev answers narrow, typed questions (Choice, Score, Noul) with calibrated
             probabilities. Every threshold, route, and explanation below is computed by this
             application from those judgments — probabilities guide workflow, they do not
@@ -277,7 +277,7 @@ export function Playground({ config }: { config: PlaygroundConfig }) {
           </p>
         </section>
 
-        <nav aria-label="Use cases" className="mt-6 flex flex-wrap gap-1.5">
+        <nav aria-label="Use cases" className="mt-5 flex w-full min-w-0 flex-wrap gap-1.5 sm:mt-6">
           {config.useCases.map((useCase) => (
             <button
               key={useCase.id}
@@ -285,7 +285,7 @@ export function Playground({ config }: { config: PlaygroundConfig }) {
               onClick={() => switchUseCase(useCase.id)}
               aria-pressed={useCase.id === activeId}
               className={cn(
-                "min-h-10 rounded-md px-4 text-sm transition-[background-color,box-shadow,color] duration-150 ease-out",
+                "min-h-10 max-w-full rounded-md px-3 text-sm transition-[background-color,box-shadow,color] duration-150 ease-out sm:px-4",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
                 useCase.id === activeId
                   ? "bg-accent text-accent-foreground"
@@ -302,9 +302,9 @@ export function Playground({ config }: { config: PlaygroundConfig }) {
           </p>
         ) : null}
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-5 grid min-w-0 gap-5 lg:mt-6 lg:grid-cols-2 lg:gap-6">
           <section aria-label="Input" className="min-w-0">
-            <div className="rounded-lg bg-card p-5 shadow-[0_0_0_1px_var(--color-border)]">
+            <div className="min-w-0 rounded-lg bg-card p-4 shadow-[0_0_0_1px_var(--color-border)] sm:p-5">
               {activeId === "support-router" ? (
                 <SupportInput
                   message={supportMessage}
@@ -385,7 +385,7 @@ export function Playground({ config }: { config: PlaygroundConfig }) {
       </main>
 
       <footer className="shrink-0 border-t border-border">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 font-mono text-xs tabular-nums text-muted-foreground lg:px-8">
+        <div className="mx-auto flex w-full max-w-7xl min-w-0 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 font-mono text-[0.6875rem] tabular-nums text-muted-foreground sm:gap-x-4 sm:px-5 sm:text-xs lg:px-8">
           <span>Requests {stats.count}</span>
           <span aria-hidden="true">·</span>
           <span>Avg {averageMs == null ? "—" : formatMs(averageMs)}</span>

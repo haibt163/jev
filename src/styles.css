@@ -81,6 +81,7 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--ts-bg);
     color: var(--ts-fg);
+    overflow-x: hidden;
   }
 
   html.theme-ready,
@@ -95,6 +96,13 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    margin: 0;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-width: 0;
   }
 
   button:not(:disabled),
@@ -127,6 +135,13 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@media (max-width: 639px) {
+  #root {
+    width: 100%;
+    min-width: 0;
   }
 }
 
