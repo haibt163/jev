@@ -81,7 +81,10 @@ export function Playground({ config }: { config: PlaygroundConfig }) {
 
   // compare-choose
   const [compareRequest, setCompareRequest] = useState("");
-  const [compareCandidates, setCompareCandidates] = useState<CompareItem[]>([]);
+  const [compareCandidates, setCompareCandidates] = useState<CompareItem[]>([
+    { key: "candidate-1", name: "", description: "" },
+    { key: "candidate-2", name: "", description: "" },
+  ]);
   const [compareOutcome, setCompareOutcome] = useState<CompareOutcome | null>(null);
 
   // content-triage
